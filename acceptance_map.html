@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Acceptance Map</title>
+  <link rel="stylesheet" href="acceptance_map.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__dot"></div>
+        <div class="brand__text">
+          <div class="brand__title">Acceptance Map</div>
+          <div class="brand__sub">state → hash → colors → grid → accept</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav__btn is-active" data-view="view-input">Input</button>
+        <button class="nav__btn" data-view="view-flow">Flow</button>
+        <button class="nav__btn" data-view="view-grid">Grid</button>
+        <button class="nav__btn" data-view="view-about">About</button>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="kv">
+          <div class="kv__k">Color index range</div>
+          <div class="kv__v">1..16^6 (16777216)</div>
+        </div>
+        <div class="kv">
+          <div class="kv__k">Tokenization</div>
+          <div class="kv__v">7-digit decimal chunks</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar__left">
+          <div class="pill" id="accept-pill">Not evaluated</div>
+          <div class="muted" id="accept-reason">—</div>
+        </div>
+        <div class="topbar__right">
+          <button class="btn" id="btn-evaluate">Evaluate</button>
+          <button class="btn btn--ghost" id="btn-copy">Copy report</button>
+        </div>
+      </header>
+
+      <!-- INPUT -->
+      <section class="view" id="view-input">
+        <div class="grid2">
+          <div class="card">
+            <div class="card__title">State source</div>
+            <div class="seg" role="tablist" aria-label="Input mode">
+              <button class="seg__btn is-active" data-inputmode="decimal">Decimal</button>
+              <button class="seg__btn" data-inputmode="binary">Binary</button>
+              <button class="seg__btn" data-inputmode="string">String</button>
+            </div>
+
+            <div class="stack" id="input-decimal">
+              <label class="label">Decimal integer (base 10)</label>
+              <input class="input" id="decimal-input" placeholder="e.g. 123456789" />
+              <div class="hint">Parsed as BigInt. No commas/spaces.</div>
+            </div>
+
+            <div class="stack is-hidden" id="input-binary">
+              <label class="label">Binary state (base 2)</label>
+              <input class="input" id="binary-input" placeholder="e.g. 101011" />
+              <div class="hint">Only 0/1 allowed. Leading zeros permitted.</div>
+            </div>
+
+            <div class="stack is-hidden" id="input-string">
+              <label class="label">String (encoded into a base-k BigInt)</label>
+              <textarea class="textarea" id="string-input" rows="6" placeholder="Type a string...\n(uses a configurable charset)" spellcheck="false"></textarea>
+
+              <div class="row">
+                <div class="col">
+                  <label class="label">Charset profile</label>
+                  <select class="select" id="charset-profile">
+                    <option value="lite" selected>Lite (fast)</option>
+                    <option value="full">Full (includes CJK/Hangul)</option>
+                  </select>
+                </div>
+                <div class="col">
+                  <label class="label">Encoding</label>
+                  <select class="select" id="encoding-mode">
+                    <option value="classic" selected>Classic (map.js style)</option>
+                    <option value="bijective">Bijective (reversible for all strings)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="hint">Classic matches your prototype. Bijective avoids collisions from leading “zero digit” characters.</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card__title">Acceptance rules</div>
+
+            <div class="rule">
+              <div class="rule__dot" id="dot-square"></div>
+              <div class="rule__text">
+                <div class="rule__name">(iv) perfect-square tile count</div>
+                <div class="muted" id="rule-square">—</div>
+              </div>
+            </div>
+
+            <div class="rule">
+              <div class="rule__dot" id="dot-range"></div>
+              <div class="rule__text">
+                <div class="rule__name">(iii) token in [1..16^6]</div>
+                <div class="muted" id="rule-range">—</div>
+              </div>
+            </div>
+
+            <div class="rule">
+              <div class="rule__dot" id="dot-adj"></div>
+              <div class="rule__text">
+                <div class="rule__name">(v) no adjacent equal hex</div>
+                <div class="muted" id="rule-adj">—</div>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <label class="checkbox">
+                <input type="checkbox" id="toggle-labels" checked />
+                <span>Show cell labels</span>
+              </label>
+            </div>
+
+            <div class="row">
+              <label class="checkbox">
+                <input type="checkbox" id="toggle-highlight" checked />
+                <span>Highlight adjacency conflicts</span>
+              </label>
+            </div>
+
+            <div class="row">
+              <label class="checkbox">
+                <input type="checkbox" id="toggle-wrap" />
+                <span>Wrap-around adjacency (toroidal)</span>
+              </label>
+            </div>
+
+            <div class="hint">Default adjacency is orthogonal inside the grid (right & down). Wrap-around makes edges adjacent too.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FLOW -->
+      <section class="view is-hidden" id="view-flow">
+        <div class="card">
+          <div class="card__title">Full system flow</div>
+          <div class="flow">
+            <div class="flow__step">
+              <div class="flow__tag">(i)</div>
+              <div>
+                <div class="flow__name">State → base10 integer</div>
+                <div class="code" id="out-base10">—</div>
+              </div>
+            </div>
+            <div class="flow__step">
+              <div class="flow__tag">(ii)</div>
+              <div>
+                <div class="flow__name">7-token hash (7-digit chunking)</div>
+                <div class="code" id="out-tokens">—</div>
+              </div>
+            </div>
+            <div class="flow__step">
+              <div class="flow__tag">(iii)</div>
+              <div>
+                <div class="flow__name">Tokens → hex colors (#000000..#FFFFFF)</div>
+                <div class="code" id="out-hex">—</div>
+              </div>
+            </div>
+            <div class="flow__step">
+              <div class="flow__tag">(iv)</div>
+              <div>
+                <div class="flow__name">Perfect square → grid size</div>
+                <div class="code" id="out-grid">—</div>
+              </div>
+            </div>
+            <div class="flow__step">
+              <div class="flow__tag">(v)</div>
+              <div>
+                <div class="flow__name">Adjacency conflict check</div>
+                <div class="code" id="out-adj">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card__title">Report</div>
+          <pre class="pre" id="report">—</pre>
+        </div>
+      </section>
+
+      <!-- GRID -->
+      <section class="view is-hidden" id="view-grid">
+        <div class="card">
+          <div class="card__title">Color tile grid</div>
+          <div class="gridwrap">
+            <div id="tile-grid" class="tilegrid" aria-label="tile grid"></div>
+          </div>
+          <div class="hint" id="grid-hint">Evaluate to render a grid.</div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="view is-hidden" id="view-about">
+        <div class="card">
+          <div class="card__title">What this implements</div>
+          <div class="prose">
+            <p>
+              This UI follows your acceptance definition as a deterministic pipeline:
+              <b>(i)</b> state → base10 integer, <b>(ii)</b> 7-token hash (7-digit chunks),
+              <b>(iii)</b> tokens → hex colors (#000000..#FFFFFF), <b>(iv)</b> tiles form a perfect square,
+              <b>(v)</b> no adjacent equal hex (optionally wrap-around).
+            </p>
+            <p>
+              It is built from the same ideas as your <code>map.js</code> prototype, but extended into the full system flow.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="acceptance_map.js"></script>
+</body>
+</html>
