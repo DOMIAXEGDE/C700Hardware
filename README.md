@@ -1,4 +1,4 @@
-# C700Hardware
+# C700Hardware (latest system as C700h.zip)
 
 4582224331819492094620773989218976013130525358770515177873737
 
@@ -30,3 +30,4 @@ That combination is important because it means the architecture can potentially 
    Circuits like this are also used as deterministic **scramblers** (map simple inputs to complex measurement distributions) and for **random-circuit / quantum-volume-style** stress tests, because small changes in angles/gates can drastically change outcomes.
 
 If you tell me **(a)** what the intended input state is (all-|0⟩? something encoded?) and **(b)** which qubits you measure (and in what basis), I can say whether it’s acting more like an *encoder/checksum*, a *state generator*, or a *problem Hamiltonian ansatz* for an optimization task.
+
